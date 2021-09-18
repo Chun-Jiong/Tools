@@ -4,17 +4,19 @@
 FCC=gfortran
 #FCC=ifort
 
-FC=-O0 -fbounds-check -Wuninitialized
+FC=-O0 -cpp -fbounds-check -Wuninitialized
 #FC=
 
 SRC=DynamicalExponent.f90
-EXEC=a.out  # the dynamics of QSI with pairing
+EXEC=dyz  # the dynamics of QSI with pairing
 
 # FFTW
-LIB=$(HOME)/opt/FFTW-3.3.8/lib/libfftw3.a
+MY_INCLUDE_PATH=-I$(HOME)/opt/fftw-gcc/include
+MY_LIBRARY_PATH=-L$(HOME)/opt/fftw-gcc/lib
+LIBS=-lfftw3
 
 $(EXEC): $(SRC)
-	$(FCC) $(FC) $(SRC) $(LIB) -o $(EXEC)
+	$(FCC) $(FC) $(SRC) -o $(EXEC) $(MY_INCLUDE_PATH) $(MY_LIBRARY_PATH) $(LIBS)
 	rm -f *.mod
 
 run:

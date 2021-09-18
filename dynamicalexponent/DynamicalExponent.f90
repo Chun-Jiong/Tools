@@ -1,7 +1,7 @@
 PROGRAM MAIN
 	use, intrinsic :: iso_c_binding
 	implicit none
-	include 'fftw3.f03'
+#include <fftw3.f03>
 	type(C_PTR)                    :: plan
 	real(8), parameter             :: PI=3.14159265358979d0
 
