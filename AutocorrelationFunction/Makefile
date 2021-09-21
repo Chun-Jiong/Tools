@@ -7,8 +7,8 @@ FCC=gfortran
 FC=-O0 -cpp -fbounds-check -Wuninitialized
 #FC=
 
-SRC=DynamicalExponent.f90
-EXEC=dyz  # the dynamics of QSI with pairing
+SRC=AutocorrelationFunction.f90
+EXEC=AutocorrelationFunction
 
 # FFTW
 MY_INCLUDE_PATH=-I$(HOME)/opt/fftw-gcc/include
