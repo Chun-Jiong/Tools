@@ -1,9 +1,10 @@
 PROGRAM MAIN
 	implicit none
-	real(8), parameter             :: PI=3.14159265358979d0
-	real(8), parameter             :: eps = 1.d-14    ! very small number
-	real(8), parameter             :: tol = 0.2d0     ! tolerance for Cor
+	real(8), parameter          :: PI=3.14159265358979d0
+	real(8), parameter          :: eps = 1.d-14    ! very small number
+	real(8), parameter          :: tol = 0.2d0     ! tolerance for Cor
 
+	integer(4)                  :: narg                 ! the number of input argument
 	character(100)              :: filename
 	integer(4)                  :: deltat               ! the time unit
 	real(8), allocatable        :: a(:,:)               ! sample record
@@ -18,13 +19,16 @@ PROGRAM MAIN
 	integer(4)                  :: isamp
 	integer(4)                  :: i
 
-	call getarg(1,filename)
+	narg = command_argument_count()
 
-	if( Len(trim(filename)) == 0 ) then
+	if( narg == 0 ) then
 		write(*,*) "Please enter the file name."
 		write(*,*) "OR if you want help, please use the parameter -h/--help"
 		stop
 	end if
+
+	!--- get the file name ---!
+	call getarg(1,filename)
 
 	if( trim(filename) == "-h" .or. trim(filename) == "--help" ) then
 		call help()
