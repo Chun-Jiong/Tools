@@ -113,8 +113,8 @@ program structure_factor
 
 	SqSq = SqSq/(NBlck*1.d0)
 
-	open(1,file=trim(filename)//".dat",action="write")
-	open(2,file=trim(filename)//"-single.dat",action="write")
+	open(1,file=trim(filename)//"-sum.dat",action="write")
+	open(2,file=trim(filename)//"-trace.dat",action="write")
 	if( GN>0 ) open(3,file=trim(filename)//"-tau.dat",action="write")
 	if( Lz==1 ) then
 		m1=0; m2=0
@@ -154,7 +154,7 @@ program structure_factor
 			do sb1=1, subl
 				c = c + SqSq(iGN,sb1,sb1,ix,iy,iz)
 			end do
-			c = c/subl
+			!c = c/subl
 			!-------------------
 			if( fm==0 ) then
 				if( mod(h,Lx)==0 .and. mod(l,Ly)==0 .and. mod(m,Lz)==0 ) c= CMPLX(0.d0,0.d0)
@@ -163,12 +163,13 @@ program structure_factor
 			write(2,'(5ES12.4)') q(1),q(2),q(3),real(c),aimag(c)
 
 			ix=h; iy=l; iz=m
+			!if( GN>0 ) then
 			if(   GN>0  .and.             &
 				  ix>=0 .and. ix<Lx .and. &
 				  iy>=0 .and. iy<Ly .and. &
 				  iz>=0 .and. iz<Lz       &
 				 ) then
-				write(3,'(4I4)') ix+iy*Lx+iz*Lx*Ly, ix, iy, iz
+				write(3,'(A2, 4I4)') "#", ix+iy*Lx+iz*Lx*Ly, ix, iy, iz
 				do iGN=0, GN
 					c = CMPLX(0.d0,0.d0)
 					do sb2=1,subl; do sb1=1,subl
@@ -178,6 +179,7 @@ program structure_factor
 					end do; end do
 					write(3,'(ES12.4)') real(c)
 				end do
+				write(3,'()'); write(3,'()')
 			end if
 		end do
 		write(1,'()')
