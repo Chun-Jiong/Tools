@@ -19,6 +19,7 @@ program structure_factor
 
 	character(50)               :: filename
 	integer(4)                  :: GN
+	complex(8), allocatable     :: bin(:,:,:,:,:,:,:)
 	complex(8), allocatable     :: SqSq(:,:,:,:,:,:)
 	real(8)                     :: q(3), dq(3)
 	integer(4)                  :: Lx, Ly, Lz
@@ -86,21 +87,31 @@ program structure_factor
 	!SqSq = 0.d0
 	SqSq = CMPLX(0.d0,0.d0)
 	ndata = 0
+	!--- START READ DATA -------------------------------------------------!
 	open(1,file=trim(filename)//".txt",action="read")
+	!--- output bin ---!
+	open(2,file=trim(filename)//"-bin.dat",action="write")
 	do
 		read(1,*,end=10) i
 		do iz=0, Lz-1; do iy=0, Ly-1; do ix=0, Lx-1
+			write(2,'(4I4)') ix+iy*Lx+iz*Lx*Ly+1, ix, iy, iz
+			q = reclatvec(1,1:3)/Lx*ix + reclatvec(2,1:3)/Ly*iy + reclatvec(3,1:3)/Lz*iz
 			do iGN=0, GN
+				c = CMPLX(0.d0,0.d0)
 				do sb2=1, subl; do sb1=1,subl      !!!!! sb2, sb1
+					br = -dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
 					read(1,*) clx(1), clx(2)
-					SqSq(iGN,sb1,sb2,ix,iy,iz) = SqSq(iGN,sb1,sb2,ix,iy,iz) + CMPLX(clx(1),clx(2))
+					c = c + CMPLX(clx(1),clx(2))*CMPLX(dcos(br),dsin(br))
 					ndata = ndata+1
 				end do; end do
+				write(2,'(ES16.8)') real(c)
 			end do
 		end do; end do; end do
 		NBlck = NBlck+1
 	end do
-	10 close(1)
+	10 rewind(1)
+	close(2)
+	if( GN==0 ) call system("rm -f "//trim(filename)//"-bin.dat")
 	if( ndata/=(Lx*Ly*Lz*subl*subl)*NBlck*(GN+1) .or. &
 		ix/=Lx .or. iy/=Ly .or. iz/=Lz .or. &
 		sb1/=subl+1 .or. sb2/=subl+1 .or. &
@@ -110,6 +121,28 @@ program structure_factor
 	end if
 	!write(*,*) ndata, ix, iy, iz, sb1, sb2, iGN
 	write(*,'(A10,I6)') "NBlck = ", NBlck
+
+	do
+		read(1,*,end=20) i
+		do iz=0, Lz-1; do iy=0, Ly-1; do ix=0, Lx-1
+			do iGN=0, GN
+				do sb2=1, subl; do sb1=1,subl      !!!!! sb2, sb1
+					read(1,*) clx(1), clx(2)
+					SqSq(iGN,sb1,sb2,ix,iy,iz) = SqSq(iGN,sb1,sb2,ix,iy,iz) + CMPLX(clx(1),clx(2))
+					!ndata = ndata+1
+				end do; end do
+			end do
+		end do; end do; end do
+		!NBlck = NBlck+1
+	end do
+	20 close(1)
+	!--- READ DATA END ---------------------------------------------------!
+
+	!if( fm==0 ) then
+	!	do sb1=1, subl
+	!		SqSq(:,sb1,sb1,0,0,0)  = CMPLX(0.d0,0.d0)
+	!	end do
+	!end if
 
 	SqSq = SqSq/(NBlck*1.d0)
 
@@ -169,7 +202,7 @@ program structure_factor
 				  iy>=0 .and. iy<Ly .and. &
 				  iz>=0 .and. iz<Lz       &
 				 ) then
-				write(3,'(A2, 4I4)') "#", ix+iy*Lx+iz*Lx*Ly, ix, iy, iz
+				write(3,'(A2, 4I4)') "#", ix+iy*Lx+iz*Lx*Ly+1, ix, iy, iz
 				do iGN=0, GN
 					c = CMPLX(0.d0,0.d0)
 					do sb2=1,subl; do sb1=1,subl
