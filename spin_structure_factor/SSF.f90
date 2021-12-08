@@ -25,12 +25,13 @@ program structure_factor
 	integer(4)                  :: Lx, Ly, Lz
 	integer(4)                  :: subl
 	integer(4)                  :: h, l, m
-	integer(4)                  :: m1, m2
+	integer(4)                  :: h1, h2, l1, l2, m1, m2
 	integer(4)                  :: fm
 	integer(4)                  :: NBlck
 	real(8)                     :: reclatvec(3,3)
 	real(8)                     :: sublatvec(3,3)
-	integer(4)                  :: nperiod
+	!integer(4)                  :: nperiod
+	real(8)                     :: nperiod
 	character(50)               :: charnum, charformat
 	integer(4)                  :: iGN
 	integer(4)                  :: ix, iy, iz
@@ -152,23 +153,22 @@ program structure_factor
 	if( Lz==1 ) then
 		m1=0; m2=0
 	else
-		m1=-nperiod*Lz+1; m2=nperiod*Lz-1
+		!m1=-nperiod*Lz+1; m2=nperiod*Lz-1
+		m1=-floor(nperiod*Lz+1.d-6); m2=floor(nperiod*Lz+1.d-6)
 	end if
+	l1=-floor(nperiod*Ly+1.d-6); l2=floor(nperiod*Ly+1.d-6)
+	h1=-floor(nperiod*Lx+1.d-6); h2=floor(nperiod*Lx+1.d-6)
 	do m=m1, m2
-	do l=-nperiod*Ly+1, nperiod*Ly-1
-		do h=-nperiod*Lx+1, nperiod*Lx-1
-	!do l=0, nperiod*Ly-1
-	!	do h=0, nperiod*Lx-1
+	do l=l1, l2
+		do h=h1, h2
+	!do m=0, Lz-1
+	!do l=0, Ly-1
+	!	do h=0, Lx-1
 			iGN=0
 			q = reclatvec(1,1:3)/Lx*h + reclatvec(2,1:3)/Ly*l + reclatvec(3,1:3)/Lz*m
-			!ix = mod(h+10*Lx,2*Lx)
-			!iy = mod(l+10*Ly,2*Ly)
-			!iz = mod(m+10*Lz,2*Lz)
-			!ix = abs(h)
-			!iy = abs(l)
-			ix = mod(h+nperiod*Lx,Lx)
-			iy = mod(l+nperiod*Ly,Ly)
-			iz = mod(m+nperiod*Lz,Lz)
+			ix = mod(h+floor(nperiod+1.d0)*Lx,Lx)
+			iy = mod(l+floor(nperiod+1.d0)*Ly,Ly)
+			iz = mod(m+floor(nperiod+1.d0)*Lz,Lz)
 			c = CMPLX(0.d0,0.d0)
 			dq = reclatvec(1,1:3)/Lx*(h-ix) + reclatvec(2,1:3)/Ly*(l-iy) + reclatvec(3,1:3)/Lz*(m-iz)
 			do sb2=1,subl; do sb1=1,subl
