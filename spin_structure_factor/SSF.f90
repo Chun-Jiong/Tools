@@ -25,6 +25,7 @@ program structure_factor
 	integer(4)                  :: Lx, Ly, Lz
 	integer(4)                  :: subl
 	integer(4)                  :: h, l, m
+	integer(4)                  :: h0, l0, m0
 	integer(4)                  :: h1, h2, l1, l2, m1, m2
 	integer(4)                  :: fm
 	integer(4)                  :: NBlck
@@ -61,11 +62,32 @@ program structure_factor
 	read(charnum,*) subl
 	call getarg(7, charnum)
 	read(charnum,*) nperiod
-	if( narg>7 ) then
-		call getarg(8, charnum)
+	if ( narg==8 ) then
+		call getarg( 8, charnum)
 		read(charnum,*) fm      ! 1: keep q=0;  0: set S(q=0)=0
+		h0 = -1
+		l0 = -1
+		m0 = -1
+	else if( narg>8 ) then
+		call getarg( 8, charnum)
+		read(charnum,*) fm      ! 1: keep q=0;  0: set S(q=0)=0
+		call getarg( 9, charnum)
+		read(charnum,*) h0
+		call getarg(10, charnum)
+		read(charnum,*) l0
+		call getarg(11, charnum)
+		read(charnum,*) m0
 	else
-		fm=1
+		fm =1
+		h0 = -1
+		l0 = -1
+		m0 = -1
+	end if
+
+	if( Lz==1 ) then
+		h0 = -1
+		l0 = -1
+		m0 = -1
 	end if
 
 	allocate(SqSq(0:GN,subl,subl,0:Lx-1,0:Ly-1,0:Lz-1))
@@ -100,7 +122,8 @@ program structure_factor
 			do iGN=0, GN
 				c = CMPLX(0.d0,0.d0)
 				do sb2=1, subl; do sb1=1,subl      !!!!! sb2, sb1
-					br = -dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
+					br = dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
+					br = -br
 					read(1,*) clx(1), clx(2)
 					c = c + CMPLX(clx(1),clx(2))*CMPLX(dcos(br),dsin(br))
 					ndata = ndata+1
@@ -129,7 +152,7 @@ program structure_factor
 			do iGN=0, GN
 				do sb2=1, subl; do sb1=1,subl      !!!!! sb2, sb1
 					read(1,*) clx(1), clx(2)
-					SqSq(iGN,sb1,sb2,ix,iy,iz) = SqSq(iGN,sb1,sb2,ix,iy,iz) + CMPLX(clx(1),clx(2))
+					SqSq(iGN,sb1,sb2,ix,iy,iz) = SqSq(iGN,sb1,sb2,ix,iy,iz) + CMPLX(clx(1),clx(2),8)
 					!ndata = ndata+1
 				end do; end do
 			end do
@@ -158,6 +181,18 @@ program structure_factor
 	end if
 	l1=-floor(nperiod*Ly+1.d-6); l2=floor(nperiod*Ly+1.d-6)
 	h1=-floor(nperiod*Lx+1.d-6); h2=floor(nperiod*Lx+1.d-6)
+
+	if( h0/=-1 ) then
+		h1=h0; h2=h0
+	end if
+	if( l0/=-1 ) then
+		l1=l0; l2=l0
+	end if
+	if( m0/=-1 ) then
+		m1=m0; m2=m0
+	end if
+
+
 	do m=m1, m2
 	do l=l1, l2
 		do h=h1, h2
@@ -170,10 +205,9 @@ program structure_factor
 			iy = mod(l+floor(nperiod+1.d0)*Ly,Ly)
 			iz = mod(m+floor(nperiod+1.d0)*Lz,Lz)
 			c = CMPLX(0.d0,0.d0)
-			dq = reclatvec(1,1:3)/Lx*(h-ix) + reclatvec(2,1:3)/Ly*(l-iy) + reclatvec(3,1:3)/Lz*(m-iz)
 			do sb2=1,subl; do sb1=1,subl
-				!br = -dot_product(dq,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
-				br = -dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
+				br = dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
+				br = -br
 				c = c + SqSq(iGN,sb1,sb2,ix,iy,iz)*CMPLX(dcos(br),dsin(br))
 			end do; end do
 			!-------------------
