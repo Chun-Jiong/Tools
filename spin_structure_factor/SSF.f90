@@ -22,7 +22,7 @@ program structure_factor
     integer(4)                  :: Ntau
     complex(8), allocatable     :: bin(:,:,:,:,:,:,:)
     complex(8), allocatable     :: SqSq(:,:,:,:,:,:)
-    real(8)                     :: q(3), dq(3)
+    real(8)                     :: q(3)
     integer(4)                  :: Lx, Ly, Lz
     integer(4)                  :: subl
     integer(4)                  :: h, l, m
@@ -31,7 +31,7 @@ program structure_factor
     integer(4)                  :: fm
     integer(4)                  :: NBlck
     real(8)                     :: reclatvec(3,3)
-    real(8)                     :: sublatvec(3,3)
+    real(8), allocatable        :: sublatvec(:,:)
     !integer(4)                  :: nperiod
     real(8)                     :: nperiod
     character(50)               :: charnum, charformat
@@ -103,6 +103,7 @@ program structure_factor
     end do
     close(10)
 
+    allocate(sublatvec(subl,3))
     sublatvec = 0.d0
     open(10,file="sublatvec.dat",action="read")
     do i=1, subl
@@ -134,6 +135,7 @@ program structure_factor
                 ndata = ndata+1
             end do; end do
             write(20,'(ES16.8)') real(c)
+            !write(20,'(4ES16.8)') q(1:3), real(c)
         end do
         end do; end do; end do
         NBlck = NBlck+1
@@ -245,7 +247,6 @@ program structure_factor
                 do iGN=0, Ntau
                     c = CMPLX(0.d0,0.d0)
                     do sb2=1,subl; do sb1=1,subl
-                        !br = -dot_product(dq,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
                         br = -dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
                         c = c + SqSq(iGN,sb1,sb2,ix,iy,iz)*CMPLX(dcos(br),dsin(br))
                     end do; end do
