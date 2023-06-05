@@ -41,8 +41,9 @@ program structure_factor
     real(8)                     :: clx(2)
     complex(8)                  :: c
     real(8)                     :: br
+    real(8)                     :: ns_factor
     integer(4)                  :: ndata
-    integer(4)                  :: i
+    integer(4)                  :: i, j
 
     narg = command_argument_count()
     if( narg<8 ) then
@@ -108,6 +109,7 @@ program structure_factor
     open(10,file="sublatvec.dat",action="read")
     do i=1, subl
         read(10,*) sublatvec(i,1:3)
+        sublatvec(i,1:3) = sublatvec(i,1:3) - (/1.d0,1.d0,1.d0/)*0.25d0
     end do
     close(10)
 
@@ -179,7 +181,9 @@ program structure_factor
 
     open(10,file=trim(filename)//"-sum.dat",action="write")
     open(20,file=trim(filename)//"-trace.dat",action="write")
-    if( GN>0 ) open(30,file=trim(filename)//"-tau.dat",action="write")
+    open(30,file=trim(filename)//"-SF.dat",action="write")
+    open(40,file=trim(filename)//"-NSF.dat",action="write")
+    if( GN>0 ) open(50,file=trim(filename)//"-tau.dat",action="write")
     if( Lz==1 ) then
         m1=0; m2=0
     else
@@ -211,6 +215,8 @@ program structure_factor
             ix = mod(h+floor(nperiod+1.d0)*Lx,Lx)
             iy = mod(l+floor(nperiod+1.d0)*Ly,Ly)
             iz = mod(m+floor(nperiod+1.d0)*Lz,Lz)
+
+            !--- Write sum -----------------------------------------------------!
             c = CMPLX(0.d0,0.d0)
             do sb2=1,subl; do sb1=1,subl
                 br = dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
@@ -224,6 +230,7 @@ program structure_factor
             !-------------------
             write(10,'(5ES12.4)') q(1),q(2),q(3),real(c),aimag(c)
 
+            !--- Write trace ---------------------------------------------------!
             c = CMPLX(0.d0,0.d0)
             do sb1=1, subl
                 c = c + SqSq(iGN,sb1,sb1,ix,iy,iz)
@@ -236,6 +243,54 @@ program structure_factor
             !-------------------
             write(20,'(5ES12.4)') q(1),q(2),q(3),real(c),aimag(c)
 
+            !--- Write Spin-Flip Channel ----------------------------------------------!
+            c = CMPLX(0.d0,0.d0)
+            do sb2=1,subl; do sb1=1,subl
+                br = dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
+                br = -br
+                ns_factor = 0.d0
+                if( dot_product(q,q)>1.d-4  ) then
+                    do i=1, 3; do j=1, 3
+                        if( i==j  ) then
+                            ns_factor = ns_factor + (1.d0-q(i)*q(j)/dot_product(q,q))*sublatvec(sb1,i)*sublatvec(sb2,j)
+                        else
+                            ns_factor = ns_factor + (0.d0-q(i)*q(j)/dot_product(q,q))*sublatvec(sb1,i)*sublatvec(sb2,j)
+                        end if
+                    end do; end do
+                    ns_factor = ns_factor / dot_product(sublatvec(1,1:3),sublatvec(1,1:3))
+                else
+                end if
+                c = c + SqSq(iGN,sb1,sb2,ix,iy,iz)*CMPLX(dcos(br),dsin(br)) *ns_factor
+            end do; end do
+            !write(30,'(5ES12.4)') q(1),q(2),q(3),real(c),aimag(c)
+            if( dot_product(q,q)>1.d-4  ) then
+                write(30,'(5ES12.4)') q(1),q(2),q(3),real(c),aimag(c)
+            end if
+
+            !--- Write Non-Spin-Flip Channel ----------------------------------------------!
+            c = CMPLX(0.d0,0.d0)
+            do sb2=1,subl; do sb1=1,subl
+                br = dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
+                br = -br
+                ns_factor = 0.d0
+                if( dot_product(q,q)>1.d-4  ) then
+                    do i=1, 3; do j=1, 3
+                        if( i==j  ) then
+                            ns_factor = ns_factor + (1.d0-q(i)*q(j)/dot_product(q,q))*sublatvec(sb1,i)*sublatvec(sb2,j)
+                        else
+                            ns_factor = ns_factor + (0.d0-q(i)*q(j)/dot_product(q,q))*sublatvec(sb1,i)*sublatvec(sb2,j)
+                        end if
+                    end do; end do
+                    ns_factor = ns_factor / dot_product(sublatvec(1,1:3),sublatvec(1,1:3))
+                else
+                end if
+                c = c + SqSq(iGN,sb1,sb2,ix,iy,iz)*CMPLX(dcos(br),dsin(br)) *ns_factor
+            end do; end do
+            write(40,'(5ES12.4)') q(1),q(2),q(3),real(c),aimag(c)
+
+
+
+            !--- Write SSF(\tau) -----------------------------------------------!
             ix=h; iy=l; iz=m
             !if( GN>0 ) then
             if(   GN>0  .and.             &
@@ -243,17 +298,17 @@ program structure_factor
                   iy>=0 .and. iy<Ly .and. &
                   iz>=0 .and. iz<Lz       &
                  ) then
-                write(30,'(A2, 4I4)') "#", ix+iy*Lx+iz*Lx*Ly+1, ix, iy, iz
+                write(50,'(A2, 4I4)') "#", ix+iy*Lx+iz*Lx*Ly+1, ix, iy, iz
                 do iGN=0, Ntau
                     c = CMPLX(0.d0,0.d0)
                     do sb2=1,subl; do sb1=1,subl
                         br = -dot_product(q,sublatvec(sb1,1:3)-sublatvec(sb2,1:3))
                         c = c + SqSq(iGN,sb1,sb2,ix,iy,iz)*CMPLX(dcos(br),dsin(br))
                     end do; end do
-                    write(30,'(ES12.4)') real(c)
+                    write(50,'(ES12.4)') real(c)
                 end do
-                write(30,'()')
-                write(30,'()')
+                write(50,'()')
+                write(50,'()')
             end if
         end do
         write(10,'()')
@@ -262,5 +317,7 @@ program structure_factor
     end do
     close(10)
     close(20)
-    if( GN>0 ) close(30)
+    close(30)
+    close(40)
+    if( GN>0 ) close(50)
 END program structure_factor
