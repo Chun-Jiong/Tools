@@ -30,9 +30,9 @@ PROGRAM main
 	case (3)
 		call getarg(1,filename)
 		call getarg(2,charmethod)
-		write(charmethod,*) method
+		read(charmethod,*) method
 		call getarg(3,charbins)
-		write(charbins,*) bins
+		read(charbins,*) bins
 	case default
 		write(*,*) "Please enter the file name (and method, bins)."
 		write(*,*) "OR if you want help, please use the parameter -h/--help"
@@ -62,6 +62,11 @@ PROGRAM main
 	end do
 	10 close(1)
 
+	open(1,file="info.txt",action="write")
+	write(1,'(A32,I6)') "The number of observables is", NObs
+	write(1,'(A32,I6)') "The number of Block is", NBlck
+	close(1)
+
 	allocate(Obs(NObs,NBlck))
 	Obs = 0.d0
 
@@ -77,8 +82,8 @@ PROGRAM main
 	close(1)
 
 	if( method==1 ) then
-		write(*,'(A16,I8)') "Initial bins  = ", NBlck
-		write(*,'(A16,I8)') "Random  bins  = ", bins
+		!write(*,'(A16,I8)') "Initial bins  = ", NBlck
+		!write(*,'(A16,I8)') "Random  bins  = ", bins
 		call date_and_time(date, time, zone, tval)
 		Seed = tval(5)*3600+tval(6)*60+tval(7)
 		call set_RNG
@@ -91,6 +96,7 @@ PROGRAM main
 			end do
 		end do
 		NBlck = bins
+		deallocate(Obs)
 		allocate(Obs(NObs,NBlck))
 		Obs = binObs
 		deallocate(binObs)
@@ -106,6 +112,8 @@ PROGRAM main
 
 	call stat_analy(NBlck)
 	call write2file(NObs)
+
+	stop
 
 CONTAINS
 #include "Statistics/statistics.f90"
