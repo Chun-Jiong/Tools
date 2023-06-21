@@ -116,8 +116,8 @@ PROGRAM main
     stop
 
 CONTAINS
-    #include "Statistics/statistics.f90"
-    #include "WriteRead/wr_cnf_stat.f90"
-    #include "RNG/rng.f90"
+#include "Statistics/statistics.f90"
+#include "WriteRead/wr_cnf_stat.f90"
+#include "RNG/rng.f90"
 
 END PROGRAM main
